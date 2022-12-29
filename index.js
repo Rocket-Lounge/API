@@ -12,10 +12,10 @@ const io = socketio(server)
 io.on('connection', socket => {
   console.info(`<${socket.id}> connected`)
   socket.on('disconnect', () => console.info(`<${socket.id}> disconnected`))
-  socket.on('self', (slug, ...payload) => {
-    console.log(slug, ...payload)
+  socket.on('self', (...payload) => {
+    console.log(...payload)
     // lookup slug and reconcile to username for steam people?
-    io.emit('player', 'CatFacts', ...payload)
+    io.emit('player', ...payload)
   })
 })
 
