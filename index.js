@@ -15,20 +15,27 @@ function recordPlayer(slug, payload) {
 }
 
 let mockInterval
-function mockPlayer(slug='epic/Boomer', displayName='Boomer', tickRate=120) {
+let mockTick = 240
+let mockSlug = 'mock/player'
+let mockDisplayName = 'Mocky Boi'
+function mockPlayer() {
   const mockJson = require('./mock.json')
   let i = 0;
   mockInterval = setInterval(() => {
     if (i >= mockJson.length) i = 0
     const [,, ...payload] = mockJson[i++]
-    io.emit('player', slug, displayName, ...payload)
-  }, 1000/tickRate)
+    io.emit('player', mockSlug, mockDisplayName, ...payload)
+  }, 1000/mockTick)
 }
 
 const app = express()
 app.get('/health', (_,res) => res.send('ok'))
+app.get('/mock/name/:name', (req,res) => {
+  mockDisplayName = req.params.name
+  res.send('ok')
+})
 app.get('/mock/on', (_,res) => {
-  mockPlayer('foo/bar', 'Mocky Boi', 240)
+  mockPlayer()
   res.send('ok')
 })
 app.get('/mock/off', (_,res) => {
