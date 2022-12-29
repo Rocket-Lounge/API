@@ -5,12 +5,12 @@ const PORT = process.env.PORT || 8080
 
 let seen
 const recordJson = []
-function recordPlayer(slug, payload) {
+function recordPlayer(slug, payload, delay=5000, length=15000) {
   const fs = require('fs')
   if (payload[0] === slug) {
     if (!seen) seen = new Date().getTime()
-    if (new Date().getTime() - seen >= 5000) recordJson.push(payload)
-    if (new Date().getTime() - seen >= 15000) fs.writeFileSync(__dirname + '/mock.json', JSON.stringify(recordJson))
+    if (new Date().getTime() - seen >= delay) recordJson.push(payload)
+    if (new Date().getTime() - seen >= length) fs.writeFileSync(__dirname + '/mock.json', JSON.stringify(recordJson))
   }
 }
 
@@ -52,6 +52,7 @@ io.on('connection', socket => {
   socket.on('disconnect', () => console.info(`<${socket.id}> disconnected`))
   socket.on('self', (...payload) => {
     console.log(...payload)
+    recordPlayer("steam/76561198175634669", payload, 3000, 30000)
     io.emit('player', ...payload)
   })
 })
