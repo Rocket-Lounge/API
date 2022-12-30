@@ -118,7 +118,7 @@ class Mock {
       this.RecordingMap[slug].push(realPayload)
     }
     const [, displayName, ...datum] = realPayload
-    const mockPayload = [`ghost/${slug}`, `(Ghost) ${displayName}`, ...datum]
+    const mockPayload = [`npc/${slug}`, `(NPC) ${displayName}`, ...datum]
     io.emit('player', ...mockPayload)
   }
 }
