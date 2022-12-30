@@ -1,0 +1,43 @@
+<html>
+<head>
+    <title>Welcome to Rocket Lounge</title>
+    <link rel="icon" type="image/x-icon" href="/assets/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossOrigin="anonymous" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:300,400,700,900" media="all" />
+    <link rel="stylesheet" href="/assets/style.css" media="all" />
+</head>
+<body>
+    <div class="overlay"></div>
+    <div class="container d-flex flex-column">
+        <div class="header d-flex flex-column justify-content-between align-items-center">
+            <nav class="topmenu d-flex justify-content-center"></nav>
+            <a target="_blank" href="#join">
+                <img class="server-icon" src="/assets/img/rl-logo.jpg" alt="Rocket League" />
+            </a>
+            <a target="_blank" href="#join" class="online-counter">
+                <span id="widget-member-count">0</span> members online
+            </a>
+            <div class="server-info d-flex align-items-center flex-column text-center">
+                <h1>Rocket Lounge</h1>
+                <p>
+                    We're building multiplayer freeplay for Rocket League with support for custom training and ghost replays.
+                    This plugin will be publicly available with automatic updates once it's ready to be published on the official
+                    BakkesMod website, but in the meantime, <a href="/download">you can download the plugin dll here</a>.
+                    If you have questions or want to give suggestions, feel free to join our discord below.
+                </p>
+                <a class="links-suppressor join-btn btn-pill white" target="_blank" href="#join">Join Now</a>
+            </div>
+        </div>
+    </div>
+    <script>
+        async function loadWidgetAPI() {
+            const res = await fetch('https://discord.com/api/guilds/377450590575263744/widget.json')
+            const { instant_invite, presence_count, members, channels } = await res.json()
+            document.getElementById('widget-member-count').innerHTML = presence_count
+            document.querySelectorAll('[href="#join"]').forEach(e => e.href = instant_invite)
+        }
+        loadWidgetAPI()
+    </script>
+</body>
+</html>

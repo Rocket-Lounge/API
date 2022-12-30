@@ -9,6 +9,7 @@ const app = express()
 const server = http.createServer(app)
 const io = socketio(server)
 
+app.use(express.static('public'))
 app.get('/health', async (_,res) => {
   const replaySlugs = await ReplayManager.GetAvailableReplaySlugs()
   res.send({ status: 'ok', replays: replaySlugs.length })
