@@ -20,6 +20,7 @@ ENV NODE_ENV production
 
 WORKDIR /app
 COPY --from=builder app/src ./src
+COPY --from=builder app/plugin ./plugin
 # COPY --from=builder app/.env ./.env # only for local fly deploys
 COPY --from=builder app/node_modules ./node_modules
 COPY --from=builder app/package.json ./package.json
