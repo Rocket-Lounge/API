@@ -70,7 +70,12 @@ class ReplayManager {
         if (!this.ReplayEmissionIntervals[slug]) {
             this.ReplayEmissionIntervals[slug] = true
             this.ReplayDataMap[slug] = await StorageManager.GetReplay(slug)
-            const { tickRate } = this.ReplayDataMap[slug]
+            const { tickRate, replay } = this.ReplayDataMap[slug]
+            if (!replay.length) {
+                console.log('[!] Cannot start empty replay for', slug)
+                this.ReplayEmissionIntervals[slug] = false
+                return
+            }
             console.log('[&] Starting new replay playback interval for', slug, 'at', tickRate, 'ticks/sec')
             this.ReplayDatumIdx[slug] = 0
             this.ReplayEmissionIntervals[slug] = setInterval(() => this.PropagateReplay(slug), 1000 / tickRate)
