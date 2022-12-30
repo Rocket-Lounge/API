@@ -19,8 +19,7 @@ ENV PORT 8080
 ENV NODE_ENV production
 
 WORKDIR /app
-COPY --from=builder app/index.js ./index.js
-COPY --from=builder app/mocks ./mocks
+COPY --from=builder app/src ./src
 COPY --from=builder app/node_modules ./node_modules
 COPY --from=builder app/package.json ./package.json
 
