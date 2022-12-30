@@ -1,46 +1,23 @@
+const fs = require('fs')
 const http = require('http')
 const express = require('express')
 const socketio = require('socket.io')
 const PORT = process.env.PORT || 8080
 
-let seen
-const recordJson = []
-function recordPlayer(slug, payload, delay=5000, length=15000) {
-  const fs = require('fs')
-  if (payload[0] === slug) {
-    if (!seen) seen = new Date().getTime()
-    if (new Date().getTime() - seen >= delay) recordJson.push(payload)
-    if (new Date().getTime() - seen >= length) fs.writeFileSync(__dirname + '/mock.json', JSON.stringify(recordJson))
-  }
-}
-
-let mockInterval
-let mockTick = 240
-let mockSlug = 'mock/player'
-let mockDisplayName = 'Mocky Boi'
-function mockPlayer() {
-  const mockJson = require('./mock.json')
-  let i = 0;
-  mockInterval = setInterval(() => {
-    if (i >= mockJson.length) i = 0
-    const [,, ...payload] = mockJson[i++]
-    io.emit('player', mockSlug, mockDisplayName, ...payload)
-  }, 1000/mockTick)
-}
-
 const app = express()
 app.get('/health', (_,res) => res.send('ok'))
-app.get('/mock/name/:name', (req,res) => {
-  mockDisplayName = req.params.name
-  res.send('ok')
-})
-app.get('/mock/on', (_,res) => {
-  mockPlayer()
-  res.send('ok')
-})
-app.get('/mock/off', (_,res) => {
-  clearInterval(mockInterval)
-  res.send('ok')
+app.get('/mock/record/:platform/:userId', (req,res) => {
+  const { platform, userId } = req.params
+  const slug = `${platform}/${userId}`
+  if (Mock.IsRecording(slug)) {
+    // stop and save
+    Mock.SaveRecording(slug)
+    res.send('saved')
+  } else {
+    // start recording
+    Mock.StartRecording(slug)
+    res.send('recording')
+  }
 })
 
 
@@ -51,11 +28,56 @@ io.on('connection', socket => {
   console.info(`<${socket.id}> connected`)
   socket.on('disconnect', () => console.info(`<${socket.id}> disconnected`))
   socket.on('self', (...payload) => {
-    console.log(...payload)
-    recordPlayer("steam/76561198175634669", payload, 3000, 30000)
+    Mock.PropagateMocks()
+    Mock.AllowRecording(payload)
     io.emit('player', ...payload)
+    console.log(...payload)
   })
 })
 
 // important! must listen from `server` not `app`
 server.listen(PORT, () => console.log(`API listening on port ${PORT}!`))
+
+class Mock {
+  static FilePath = `${__dirname}/mocks`
+  static RecordingMap = {}
+  static IsRecording(slug) {
+    return Boolean(this.RecordingMap[slug])
+  }
+  static StartRecording(slug) {
+    this.RecordingMap[slug] = []
+  }
+  static SaveRecording(slug) {
+    fs.writeFileSync(`${this.FilePath}/${Buffer(slug).toString('base64')}.json`, JSON.stringify(this.RecordingMap[slug]))
+    this.StopRecording(slug)
+  }
+  static StopRecording(slug) {
+    this.RecordingMap[slug] = null
+  }
+  static AllowRecording(payload) {
+    if (this.RecordingMap[payload[0]]) this.RecordingMap[payload[0]].push(payload)
+  }
+
+  static MockTickRate = 240
+  static MockIterators = {}
+  static MockIntervals = {}
+  static PropagateMocks() {
+    fs.readdir(this.FilePath, (err, files) => {
+      if (err) return console.log('Unable to scan directory: ' + err)
+      for(const file of files) {
+        const mockData = require(`${this.FilePath}/${file}`)
+        const slug = Buffer(file, 'base64').toString('ascii')
+        if (!this.MockIntervals[slug]) {
+          this.MockIterators[slug] = 0
+          this.MockIntervals[slug] = setInterval(() => {
+            if (this.MockIterators[slug] >= mockData.length) this.MockIterators[slug] = 0
+            const [, displayName, ...datum] = mockData[this.MockIterators[slug]++]
+            const mockPayload = [`ghost/${slug}`, `(Ghost) ${displayName}`, ...datum]
+            io.emit('player', ...mockPayload)
+            console.log(...mockPayload)
+          }, 1000/this.MockTickRate)
+        }
+      }
+    })
+  }
+}
