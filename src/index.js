@@ -9,7 +9,10 @@ const app = express()
 const server = http.createServer(app)
 const io = socketio(server)
 
-app.get('/health', (_,res) => res.send('ok'))
+app.get('/health', async (_,res) => {
+  const replaySlugs = await ReplayManager.GetAvailableReplaySlugs()
+  res.send({ status: 'ok', replays: replaySlugs.length })
+})
 app.get('/mock/record/:platform/:userId/:tickRate', (req,res) => {
   const { platform, userId, tickRate } = req.params
   const slug = `${platform}/${userId}`

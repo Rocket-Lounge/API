@@ -76,8 +76,12 @@ class ReplayManager {
         }
     }
 
+    static async GetAvailableReplaySlugs() {
+        return StorageManager.GetAllReplaySlugs()
+    }
+
     static async PropagateReplays() {
-        const replaySlugs = await StorageManager.GetAllReplaySlugs()
+        const replaySlugs = await this.GetAvailableReplaySlugs()
         for (const { slug } of replaySlugs) this.AllowReplayPropagation(slug)
     }
 
