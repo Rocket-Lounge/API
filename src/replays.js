@@ -63,16 +63,17 @@ class ReplayManager {
     static ReplayEmitCallbacks = []
     static ReplayEmissionIntervals = {}
     static RefreshIntervalDuration = 1000
+    static ReplayDataMap = {}
     static RefreshInterval
 
     static async AllowReplayPropagation(slug) {
         if (!this.ReplayEmissionIntervals[slug]) {
             this.ReplayEmissionIntervals[slug] = true
-            const replayData = await StorageManager.GetReplay(slug)
-            const { tickRate } = replayData
+            ReplayDataMap[slug] = await StorageManager.GetReplay(slug)
+            const { tickRate } = ReplayDataMap[slug]
             console.log('[&] Starting new replay playback interval for', slug, 'at', tickRate, 'ticks/sec')
             this.ReplayDatumIdx[slug] = 0
-            this.ReplayEmissionIntervals[slug] = setInterval(() => this.PropagateReplay(replayData), 1000 / tickRate)
+            this.ReplayEmissionIntervals[slug] = setInterval(() => this.PropagateReplay(slug), 1000 / tickRate)
         }
     }
 
@@ -85,9 +86,9 @@ class ReplayManager {
         for (const { slug } of replaySlugs) this.AllowReplayPropagation(slug)
     }
 
-    static async PropagateReplay({ slug, replay }) {
-        if (this.ReplayDatumIdx[slug] >= replay.length) this.ReplayDatumIdx[slug] = 0
-        const realPayload = replay[this.ReplayDatumIdx[slug]++]
+    static async PropagateReplay(slug) {
+        if (this.ReplayDatumIdx[slug] >= ReplayDataMap[slug].length) this.ReplayDatumIdx[slug] = 0
+        const realPayload = ReplayDataMap[slug][this.ReplayDatumIdx[slug]++]
         if (this.IsTrimming[slug]) this.RecordingMap[slug].push(realPayload)
         const [, displayName, ...datum] = realPayload
         const mockPayload = [`npc/${slug}`, `(NPC) ${displayName}`, ...datum]
