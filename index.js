@@ -24,13 +24,9 @@ app.get('/mock/trim/:platform/:userId', (req,res) => {
   const { platform, userId } = req.params
   const slug = `${platform}/${userId}`
   if (Mock.IsTrimming[slug]) {
-    // stop and save
-    Mock.StopTrimming()
-    const { tickRate } = require(`${Mock.FilePath}/${Buffer(slug).toString('base64')}.json`)
-    Mock.SaveRecording(slug, tickRate)
+    Mock.SaveTrimming()
     res.send('saved')
   } else {
-    // start recording
     Mock.StartTrimming(slug)
     res.send('recording')
   }
@@ -46,7 +42,6 @@ io.on('connection', socket => {
   socket.on('self', (...payload) => {
     Mock.AllowRecording(payload)
     io.emit('player', ...payload)
-    console.log(...payload)
   })
 })
 
@@ -70,37 +65,42 @@ class Mock {
     this.IsTrimming[slug] = true
     Mock.StartRecording(slug)
   }
-  static StopTrimming(slug) {
+  static SaveTrimming(slug) {
     this.IsTrimming[slug] = false
+    const { tickRate } = require(this.MockFilePath(slug))
+    Mock.SaveRecording(slug, tickRate)
   }
   static StartRecording(slug) {
     this.RecordingMap[slug] = []
   }
   static SaveRecording(slug, tickRate) {
-    const filePath = `${this.FilePath}/${Buffer(slug).toString('base64')}.json`
-    fs.writeFileSync(filePath, JSON.stringify({ tickRate, data: this.RecordingMap[slug] }))
-    this.StopRecording(slug)
-  }
-  static StopRecording(slug) {
+    fs.unlinkSync(this.MockFilePath(slug))
+    fs.writeFileSync(this.MockFilePath(slug), JSON.stringify({ tickRate, timestamp: new Date().getTime(), data: this.RecordingMap[slug] }))
     clearInterval(this.MockIntervals[slug])
     delete this.MockIntervals[slug]
     this.RecordingMap[slug] = null
   }
   static AllowRecording(payload) {
-    if (this.RecordingMap[payload[0]] && !this.IsTrimming[payload[0]]) this.RecordingMap[payload[0]].push(payload)
+    const [slug] = payload
+    if (this.RecordingMap[slug] && !this.IsTrimming[slug]) {
+      this.RecordingMap[slug].push(payload)
+    }
+  }
+
+  static AllowMockFile(file) {
+    const slug = Buffer(file, 'base64').toString('ascii')
+    if (!this.MockIntervals[slug]) {
+      const rawData = fs.readFileSync(`${this.FilePath}/${file}`)
+      const { tickRate } = JSON.parse(rawData)
+      this.MockIterators[slug] = 0
+      this.MockIntervals[slug] = setInterval(() => this.PropagateMock(slug), 1000/tickRate)
+    }
   }
 
   static PropagateMocks() {
     fs.readdir(this.FilePath, (err, files) => {
       if (err) return console.log('Unable to scan directory: ' + err)
-      for(const file of files) {
-        const slug = Buffer(file, 'base64').toString('ascii')
-        if (!this.MockIntervals[slug]) {
-          const { tickRate } = require(`${this.FilePath}/${file}`)
-          this.MockIterators[slug] = 0
-          this.MockIntervals[slug] = setInterval(() => this.PropagateMock(slug), 1000/tickRate)
-        }
-      }
+      for(const file of files) this.AllowMockFile(file)
     })
   }
 
@@ -109,7 +109,8 @@ class Mock {
   }
 
   static PropagateMock(slug) {
-    const { data } = require(this.MockFilePath(slug))
+    const rawData = fs.readFileSync(this.MockFilePath(slug))
+    const { data } = JSON.parse(rawData)
     if (!data) return
     if (this.MockIterators[slug] >= data.length) this.MockIterators[slug] = 0
     const realPayload = data[this.MockIterators[slug]++]
