@@ -13,6 +13,9 @@ app.get('/health', async (_,res) => {
   const replaySlugs = await ReplayManager.GetAvailableReplaySlugs()
   res.send({ status: 'ok', replays: replaySlugs.length })
 })
+app.get('/download', async (_,res) => {
+  res.download('./plugin/A1RocketLounge.dll')
+})
 app.get('/mock/record/:platform/:userId/:tickRate', (req,res) => {
   const { platform, userId, tickRate } = req.params
   const slug = `${platform}/${userId}`
