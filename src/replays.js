@@ -87,8 +87,9 @@ class ReplayManager {
     }
 
     static async PropagateReplay(slug) {
-        if (this.ReplayDatumIdx[slug] >= this.ReplayDataMap[slug].length) this.ReplayDatumIdx[slug] = 0
-        const realPayload = this.ReplayDataMap[slug][this.ReplayDatumIdx[slug]++]
+        const { replay } = this.ReplayDataMap[slug]
+        if (this.ReplayDatumIdx[slug] >= replay.length) this.ReplayDatumIdx[slug] = 0
+        const realPayload = replay[this.ReplayDatumIdx[slug]++]
         if (this.IsTrimming[slug]) this.RecordingMap[slug].push(realPayload)
         const [, displayName, ...datum] = realPayload
         const mockPayload = [`npc/${slug}`, `(NPC) ${displayName}`, ...datum]
