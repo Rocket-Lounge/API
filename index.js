@@ -24,7 +24,7 @@ app.get('/mock/trim/:platform/:userId', (req,res) => {
   const { platform, userId } = req.params
   const slug = `${platform}/${userId}`
   if (Mock.IsTrimming[slug]) {
-    Mock.SaveTrimming()
+    Mock.SaveTrimming(slug)
     res.send('saved')
   } else {
     Mock.StartTrimming(slug)
@@ -66,6 +66,7 @@ class Mock {
     Mock.StartRecording(slug)
   }
   static SaveTrimming(slug) {
+    if (!slug) return console.log('savetrimming with no slug')
     this.IsTrimming[slug] = false
     const { tickRate } = require(this.MockFilePath(slug))
     Mock.SaveRecording(slug, tickRate)
@@ -74,7 +75,7 @@ class Mock {
     this.RecordingMap[slug] = []
   }
   static SaveRecording(slug, tickRate) {
-    fs.unlinkSync(this.MockFilePath(slug))
+    // fs.unlinkSync(this.MockFilePath(slug)) // if exists
     fs.writeFileSync(this.MockFilePath(slug), JSON.stringify({ tickRate, timestamp: new Date().getTime(), data: this.RecordingMap[slug] }))
     clearInterval(this.MockIntervals[slug])
     delete this.MockIntervals[slug]
@@ -90,8 +91,10 @@ class Mock {
   static AllowMockFile(file) {
     const slug = Buffer(file, 'base64').toString('ascii')
     if (!this.MockIntervals[slug]) {
-      const rawData = fs.readFileSync(`${this.FilePath}/${file}`)
-      const { tickRate } = JSON.parse(rawData)
+      // const rawData = fs.readFileSync(`${this.FilePath}/${file}`)
+      // const { tickRate } = JSON.parse(rawData)
+      const { tickRate } = require(`${this.FilePath}/${file}`)
+      console.log('Starting new interval for', slug, 'at', tickRate, 'ticks per sec')
       this.MockIterators[slug] = 0
       this.MockIntervals[slug] = setInterval(() => this.PropagateMock(slug), 1000/tickRate)
     }
@@ -105,12 +108,16 @@ class Mock {
   }
 
   static MockFilePath(slug) {
+    if (!slug) {
+      console.log('wtf')
+    }
     return `${Mock.FilePath}/${Buffer(slug).toString('base64')}.json`
   }
 
   static PropagateMock(slug) {
-    const rawData = fs.readFileSync(this.MockFilePath(slug))
-    const { data } = JSON.parse(rawData)
+    // const rawData = fs.readFileSync(this.MockFilePath(slug))
+    // const { data } = JSON.parse(rawData)
+    const { data } = require(this.MockFilePath(slug))
     if (!data) return
     if (this.MockIterators[slug] >= data.length) this.MockIterators[slug] = 0
     const realPayload = data[this.MockIterators[slug]++]
@@ -119,6 +126,7 @@ class Mock {
     }
     const [, displayName, ...datum] = realPayload
     const mockPayload = [`npc/${slug}`, `(NPC) ${displayName}`, ...datum]
+    // console.log('Emitting mock payload', this.MockIterators[slug], 'of', data.length)
     io.emit('player', ...mockPayload)
   }
 }
