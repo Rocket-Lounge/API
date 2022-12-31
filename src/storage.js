@@ -6,6 +6,7 @@ class StorageManager {
     static mongoClient
 
     static async Connect() {
+        if (this.db) return
         const { MONGO_CONN_STR, MONGO_DB_NAME } = process.env
         this.mongoClient = new MongoClient(MONGO_CONN_STR)
         await this.mongoClient.connect()
