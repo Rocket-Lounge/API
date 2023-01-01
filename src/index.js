@@ -46,6 +46,7 @@ app.get('/mock/trim/:platform/:userId', (req,res) => {
 io.on('connection', socket => {
   console.info(`<${socket.id}> connected`)
   socket.on('disconnect', () => console.info(`<${socket.id}> disconnected`))
+  socket.on('chat', (...payload) => io.emit('chat', ...payload))
   socket.on('self', (...payload) => {
     ReplayManager.AllowRecording(payload)
     io.emit('player', ...payload)
