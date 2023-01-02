@@ -10,10 +10,7 @@ const app = express()
 const server = http.createServer(app)
 const io = socketio(server)
 
-enet.init((ip, port) => {
-  // if(ip === '192.168.0.22')  return 0
-    return 1 //permit the packet
-})
+enet.init(() => 1)
 enet.createServer({
 	address: { address: "0.0.0.0", port: 7777 }, /* the address the server host will bind to */
 	peers:32, /* allow up to 32 clients and/or outgoing connections */
@@ -26,9 +23,10 @@ enet.createServer({
 	host.on("connect", (peer,data) => {
     console.log('client connected')
 		peer.on("message", (packet,channel) => {
-      host.broadcast("message", packet.data().toString())
+      const data = packet.data()
+      host.broadcast("message", data)
       console.log('data received')
-			console.log("received packet contents:",packet.data().toString())
+			console.log("received packet contents:", data.toString())
 		})
 	})
 
