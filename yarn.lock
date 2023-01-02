@@ -948,6 +948,11 @@ encodeurl@~1.0.2:
   resolved "https://registry.yarnpkg.com/encodeurl/-/encodeurl-1.0.2.tgz#ad3ff4c86ec2d029322f5a02c3a9a606c95b3f59"
   integrity sha512-TPJXq8JqFaVYm2CWmPvnP2Iyo4ZSM7/QKcSmuMLDObfpH5fi7RUGmd/rTDf+rut/saiDiQEeVTNgAmJEdAOx0w==
 
+enet@^0.2.9:
+  version "0.2.9"
+  resolved "https://registry.yarnpkg.com/enet/-/enet-0.2.9.tgz#d7fd68a0bf8bb3891408ea465e26ed6955822a1a"
+  integrity sha512-V3qaPJEHY1Bl9F1nEY4thQV2fKkwS+I8Xpss4/91Hyi6JHagB7Ur6bROyVp4wqO74cPbF0ptgyyYh0L0Sky4Lw==
+
 engine.io-parser@~5.0.3:
   version "5.0.4"
   resolved "https://registry.yarnpkg.com/engine.io-parser/-/engine.io-parser-5.0.4.tgz#0b13f704fa9271b3ec4f33112410d8f3f41d0fc0"
